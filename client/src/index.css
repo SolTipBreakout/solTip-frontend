@@ -3,32 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 20 14.3% 4.1%;
-  --muted: 60 4.8% 95.9%;
-  --muted-foreground: 25 5.3% 44.7%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 20 14.3% 4.1%;
-  --card: 0 0% 100%;
-  --card-foreground: 20 14.3% 4.1%;
-  --border: 20 5.9% 90%;
-  --input: 20 5.9% 90%;
+  --background: 222 19% 12%; /* Dark background #1A1F2E */
+  --foreground: 0 0% 98%;
+  --muted: 240 6% 10%;
+  --muted-foreground: 240 5% 65%;
+  --popover: 222 19% 10%;
+  --popover-foreground: 0 0% 98%;
+  --card: 224 22% 15%;
+  --card-foreground: 0 0% 98%;
+  --border: 224 20% 20%;
+  --input: 224 20% 20%;
   --primary: 271 100% 64%; /* Solana purple #9945FF */
   --primary-foreground: 211 100% 99%;
-  --secondary: 60 4.8% 95.9%;
-  --secondary-foreground: 24 9.8% 10%;
-  --accent: 157 100% 51%; /* Solana green #14F195 */
-  --accent-foreground: 24 9.8% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 60 9.1% 97.8%;
+  --secondary: 157 100% 51%; /* Solana green #14F195 */
+  --secondary-foreground: 0 0% 10%;
+  --accent: 159 100% 50%; /* Neon green #00FFA3 */
+  --accent-foreground: 0 0% 10%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
   --ring: 271 100% 64%; /* Solana purple */
   --radius: 0.5rem;
   
   /* Solana specific colors */
-  --solana-purple: 271 100% 64%;
-  --solana-green: 157 100% 51%;
-  --solana-dark: 222 22% 15%;
-  --solana-accent: 159 100% 50%;
+  --solana-purple: 271 100% 64%; /* #9945FF */
+  --solana-green: 157 100% 51%; /* #14F195 */
+  --solana-dark: 222 19% 12%; /* #1A1F2E */
+  --solana-accent: 159 100% 50%; /* #00FFA3 */
   
   /* Chart colors */
   --chart-1: 271 100% 64%;
@@ -38,26 +38,26 @@
   --chart-5: 48 100% 50%;
 }
 
-.dark {
-  --background: 222 22% 15%; /* Solana dark #1A1F2E */
-  --foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --popover: 222 22% 15%;
-  --popover-foreground: 0 0% 98%;
-  --card: 222 22% 15%;
-  --card-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --primary: 271 100% 64%; /* Solana purple #9945FF */
-  --primary-foreground: 211 100% 99%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --accent: 157 100% 51%; /* Solana green #14F195 */
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --ring: 271 100% 64%; /* Solana purple */
+.light {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 4%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 4% 46%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 4%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 4%;
+  --border: 240 6% 90%;
+  --input: 240 6% 90%;
+  --primary: 271 100% 64%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 240 5% 96%;
+  --secondary-foreground: 240 6% 10%;
+  --accent: 157 100% 51%;
+  --accent-foreground: 240 6% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --ring: 271 100% 64%;
 }
 
 @layer base {
@@ -67,11 +67,21 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    background-image: radial-gradient(
+      circle at 50% 0%, 
+      rgba(153, 69, 255, 0.08) 0%, 
+      rgba(20, 241, 149, 0.03) 50%,
+      rgba(26, 31, 46, 1) 100%
+    );
+    background-attachment: fixed;
   }
 }
 
+/* Crypto-themed UI Elements */
 .glass-card {
   backdrop-filter: blur(10px);
+  background: rgba(15, 15, 20, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .gradient-button {
@@ -82,5 +92,70 @@
 .gradient-button:hover {
   opacity: 0.9;
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(153, 69, 255, 0.2);
+  box-shadow: 0 10px 20px rgba(20, 241, 149, 0.3);
+}
+
+.solana-card {
+  background: linear-gradient(145deg, rgba(30, 39, 58, 1), rgba(23, 28, 41, 1));
+  border: 1px solid rgba(153, 69, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(9, 9, 11, 0.3),
+              0 0 0 1px rgba(153, 69, 255, 0.1),
+              0 0 24px rgba(153, 69, 255, 0.05);
+  backdrop-filter: blur(4px);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.solana-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #9945FF, #14F195);
+  opacity: 0.7;
+}
+
+.solana-highlight {
+  color: #14F195;
+  font-weight: 600;
+}
+
+/* Dashboard stat cards */
+.stats-card {
+  @apply solana-card p-6 flex flex-col;
+  transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.3),
+              0 0 0 1px rgba(153, 69, 255, 0.2),
+              0 0 32px rgba(153, 69, 255, 0.1);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(30, 39, 58, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(153, 69, 255, 0.5);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(153, 69, 255, 0.7);
+}
+
+/* Make dark the default theme */
+:root {
+  color-scheme: dark;
 }

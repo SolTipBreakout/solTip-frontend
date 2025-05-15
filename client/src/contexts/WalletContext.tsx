@@ -1,6 +1,7 @@
 import { ReactNode, createContext, useState, useEffect } from "react";
 import { Wallet, SocialAccount, TransactionItem } from "@/lib/types";
 import { apiRequest } from "@/lib/queryClient";
+import { usePrivy } from "@privy-io/react-auth";
 
 interface WalletContextType {
   wallet: Wallet | null;
@@ -33,12 +34,38 @@ interface WalletProviderProps {
 }
 
 export function WalletProvider({ children }: WalletProviderProps) {
+  const { login, logout, authenticated, user, connectWallet: privyConnectWallet } = usePrivy();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
 
-  // Mock data for development, these would come from API calls in production
+  // Effect to handle Privy authentication changes
+  useEffect(() => {
+    if (authenticated && user) {
+      // When user authenticates with Privy, update our connected state
+      setIsConnected(true);
+      
+      // Set up wallet info
+      setWallet(mockWallet);
+      
+      // Set up social accounts
+      // In a real implementation, this would look at user's actual linked accounts
+      // For now, using a simplified approach with mock data
+      setSocialAccounts(mockSocialAccounts);
+      
+      // Also load transactions
+      setTransactions(mockTransactions);
+    } else {
+      // Reset state when user is not authenticated
+      setIsConnected(false);
+      setWallet(null);
+      setSocialAccounts([]);
+      setTransactions([]);
+    }
+  }, [authenticated, user]);
+
+  // Mock wallet data for development
   const mockWallet: Wallet = {
     balance: 145.32,
     balanceUsd: 7265.00,
