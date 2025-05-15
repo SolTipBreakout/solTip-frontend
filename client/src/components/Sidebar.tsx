@@ -9,12 +9,12 @@ export default function Sidebar() {
   };
   
   return (
-    <aside className="hidden md:flex md:w-64 flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+    <aside className="hidden md:flex md:w-64 flex-col bg-black/95 border-r border-gray-800">
+      <div className="p-4 border-b border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#9945FF] to-[#14F195]"></div>
-            <h1 className="text-xl font-bold">SolTip</h1>
+            <h1 className="text-xl font-bold text-white">SolTip</h1>
           </div>
         </div>
       </div>
@@ -22,49 +22,49 @@ export default function Sidebar() {
       {/* Navigation Menu */}
       <nav className="p-4 space-y-1">
         <Link href="/">
-          <a className={`flex items-center space-x-2 p-2 rounded-lg ${isActive("/") 
-            ? "bg-gray-100 dark:bg-gray-800 font-medium" 
-            : "hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"}`}>
-            <i className={`fas fa-th-large ${isActive("/") ? "text-[#9945FF]" : ""}`}></i>
+          <div className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer ${isActive("/") 
+            ? "bg-[#1E1E1E] font-medium text-white" 
+            : "text-gray-300 hover:bg-[#1E1E1E] hover:text-white transition-colors"}`}>
+            <i className={`fas fa-th-large ${isActive("/") ? "text-[#14F195]" : ""}`}></i>
             <span>Dashboard</span>
-          </a>
+          </div>
         </Link>
         <Link href="/send">
-          <a className={`flex items-center space-x-2 p-2 rounded-lg ${isActive("/send") 
-            ? "bg-gray-100 dark:bg-gray-800 font-medium" 
-            : "hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"}`}>
-            <i className={`fas fa-paper-plane ${isActive("/send") ? "text-[#9945FF]" : ""}`}></i>
+          <div className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer ${isActive("/send") 
+            ? "bg-[#1E1E1E] font-medium text-white" 
+            : "text-gray-300 hover:bg-[#1E1E1E] hover:text-white transition-colors"}`}>
+            <i className={`fas fa-paper-plane ${isActive("/send") ? "text-[#14F195]" : ""}`}></i>
             <span>Send Tip</span>
-          </a>
+          </div>
         </Link>
         <Link href="/wallet">
-          <a className={`flex items-center space-x-2 p-2 rounded-lg ${isActive("/wallet") 
-            ? "bg-gray-100 dark:bg-gray-800 font-medium" 
-            : "hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"}`}>
-            <i className={`fas fa-wallet ${isActive("/wallet") ? "text-[#9945FF]" : ""}`}></i>
+          <div className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer ${isActive("/wallet") 
+            ? "bg-[#1E1E1E] font-medium text-white" 
+            : "text-gray-300 hover:bg-[#1E1E1E] hover:text-white transition-colors"}`}>
+            <i className={`fas fa-wallet ${isActive("/wallet") ? "text-[#14F195]" : ""}`}></i>
             <span>Wallet</span>
-          </a>
+          </div>
         </Link>
         <Link href="/transactions">
-          <a className={`flex items-center space-x-2 p-2 rounded-lg ${isActive("/transactions") 
-            ? "bg-gray-100 dark:bg-gray-800 font-medium" 
-            : "hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"}`}>
-            <i className={`fas fa-exchange-alt ${isActive("/transactions") ? "text-[#9945FF]" : ""}`}></i>
+          <div className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer ${isActive("/transactions") 
+            ? "bg-[#1E1E1E] font-medium text-white" 
+            : "text-gray-300 hover:bg-[#1E1E1E] hover:text-white transition-colors"}`}>
+            <i className={`fas fa-exchange-alt ${isActive("/transactions") ? "text-[#14F195]" : ""}`}></i>
             <span>Transactions</span>
-          </a>
+          </div>
         </Link>
         <Link href="/connect">
-          <a className={`flex items-center space-x-2 p-2 rounded-lg ${isActive("/connect") 
-            ? "bg-gray-100 dark:bg-gray-800 font-medium" 
-            : "hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"}`}>
-            <i className={`fas fa-link ${isActive("/connect") ? "text-[#9945FF]" : ""}`}></i>
+          <div className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer ${isActive("/connect") 
+            ? "bg-[#1E1E1E] font-medium text-white" 
+            : "text-gray-300 hover:bg-[#1E1E1E] hover:text-white transition-colors"}`}>
+            <i className={`fas fa-link ${isActive("/connect") ? "text-[#14F195]" : ""}`}></i>
             <span>Connect Accounts</span>
-          </a>
+          </div>
         </Link>
       </nav>
       
       {/* Theme Toggle (Desktop) */}
-      <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="mt-auto p-4 border-t border-gray-800">
         <ThemeToggle />
       </div>
     </aside>
