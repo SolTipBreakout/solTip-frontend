@@ -1,0 +1,63 @@
+
+# Prompt for Replit to Build a SolTip Frontend
+
+## Project Overview
+Build a modern, responsive frontend for SolTip (also known as SolBreakOut), a Solana blockchain-based tipping and wallet management platform that works across multiple social platforms (Twitter, Discord, and Telegram). The platform enables users to send SOL and tokens to social media users as easily as interacting with them on their platforms.
+
+## Important Note
+**No database implementation is required.** The database and API endpoints are already set up and functional. You only need to build the frontend that will connect to these existing endpoints.
+
+## Core Requirements
+
+### 1. User Interface Components
+- **Dashboard**: Main interface showing wallet balance, connected platforms, and recent transactions
+- **Platform Connector**: UI for connecting Twitter, Discord, and Telegram accounts
+- **Wallet Management**: Create, import, and view wallet details
+- **Transaction History**: List of sent/received tips with filtering options
+- **Send Tip UI**: Simple form to send SOL/tokens to other users via their social handles
+
+### 2. Functionality
+- User authentication (wallet-based login with Phantom/Solflare support)
+- Social account linking and management
+- Real-time wallet balance display
+- Transaction creation and signing
+- QR code generation for receiving payments
+- Responsive design for mobile/desktop usage
+
+### 3. Technical Specifications
+- **Framework**: React with TypeScript
+- **Styling**: Tailwind CSS for responsive design
+- **Wallet Integration**: Solana Web3.js and wallet adapter
+- **State Management**: React Query for data fetching
+- **UI Components**: Prefer a clean, minimal design with dark mode support
+
+### 4. API Integration
+- Connect to existing API endpoints for:
+  - Wallet balance querying
+  - Transaction processing
+  - Social account linking verification
+  - Transaction history
+- No backend/database implementation needed - simply consume the provided API endpoints
+
+### 5. Design Requirements
+- Modern, clean aesthetic with Solana-themed colors
+- Intuitive navigation between wallet, social connections, and tipping
+- Clear transaction status indicators
+- Easily scannable transaction history
+- Mobile-first responsive design
+
+## User Flows to Support
+1. First-time user onboarding (wallet creation/import)
+2. Connecting social media accounts
+3. Sending tips to other users via social handles
+4. Viewing and filtering transaction history
+5. Managing wallet settings and security
+
+## Additional Considerations
+- Implement proper error handling for network/blockchain issues
+- Include loading states for blockchain operations
+- Support dark/light theme toggle
+- Ensure accessibility compliance
+- Include tooltips/guidance for crypto beginners
+
+The final product should make sending crypto tips as simple as social media interactions, with an intuitive UI that abstracts the complexity of blockchain operations while providing transparency on transaction status. Focus solely on the frontend implementation, as all backend services are already in place.
