@@ -8,3 +8,4 @@ pnpm-workspace.yaml
 npm-lock.yaml
 task.md
 attached_assets
+.pnpm.lock.yaml
