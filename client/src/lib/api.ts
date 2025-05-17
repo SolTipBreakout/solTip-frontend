@@ -4,7 +4,7 @@ import { PublicKey } from "@solana/web3.js";
 export type PlatformType = "twitter" | "telegram" | "discord";
 
 // Set up the API base URL using environment variables
-const API_BASE_URL = import.meta.env.VITE_NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_BASE_URL = "http://u4008kw840kcsgsc4kwgo448.34.67.137.207.sslip.io/api";
 const API_KEY = "dev-key-1";
 
 declare global {
@@ -141,7 +141,7 @@ export const api = {
     
     // Get user profile by wallet address
     getProfileByWalletAddress: (walletAddress: string) =>
-      apiRequest<UserProfileResponse>(`/user/wallet/${walletAddress}`),
+      apiRequest<UserProfileResponse>(`/user/profile/${walletAddress}`),
 
     // Get user by platform ID
     getByPlatformId: (platform: PlatformType, platformId: string) =>
