@@ -1,216 +1,234 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Send, ArrowRight, Twitter, MessageCircle } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { LAMPORTS_PER_SOL, Connection, PublicKey, Transaction as SolanaTransaction, SystemProgram } from "@solana/web3.js";
+import { api, PlatformType } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import ConnectWalletModal from "@/components/ConnectWalletModal";
+
+const TelegramIcon = (props: React.ComponentProps<"svg">) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M22 2L11 13" />
+    <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+  </svg>
+);
+
+interface PlatformOption {
+  value: PlatformType;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+}
+
+const platformOptions: PlatformOption[] = [
+  { value: "twitter", label: "Twitter", icon: Twitter, color: "#1DA1F2" },
+  { value: "discord", label: "Discord", icon: MessageCircle, color: "#5865F2" },
+  { value: "telegram", label: "Telegram", icon: TelegramIcon, color: "#0088cc" },
+] as const;
+
+const SOLANA_RPC_URL = "https://api.devnet.solana.com";
 
 export default function SendTip() {
-  const { isConnected, sendTip } = useWallet();
-  const { toast } = useToast();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [platform, setPlatform] = useState("twitter");
-  const [recipient, setRecipient] = useState("");
+  const { publicKey, connected, sendTransaction } = useWallet();
   const [amount, setAmount] = useState("");
-  const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [username, setUsername] = useState("");
+  const [platform, setPlatform] = useState<PlatformType>("twitter");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!isConnected) {
-      setIsModalOpen(true);
-      return;
-    }
-    
-    if (!recipient || !amount) {
+  const handleSendTip = async () => {
+    if (!amount || !username || !connected || !publicKey || !sendTransaction) {
       toast({
-        title: "Invalid Input",
-        description: "Please enter both recipient and amount",
+        title: "Error",
+        description: "Please fill all fields and connect your wallet",
         variant: "destructive",
       });
       return;
     }
     
+    setLoading(true);
     try {
-      setIsSubmitting(true);
-      await sendTip(recipient, parseFloat(amount), platform, message);
+      toast({
+        title: "Looking up recipient...",
+        description: `Finding wallet for @${username} on ${platform}`,
+      });
+      
+      const recipientWallet = await api.user.getWalletBySocial(platform, username);
+      if (!recipientWallet?.publicKey) {
+        throw new Error("Could not find recipient wallet");
+      }
+      
+      const connection = new Connection(SOLANA_RPC_URL, "confirmed");
+      const amountLamports = parseFloat(amount) * LAMPORTS_PER_SOL;
+      
+      const transaction = new SolanaTransaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(recipientWallet.publicKey),
+          lamports: amountLamports,
+        })
+      );
+      
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = publicKey;
+      
+      toast({
+        title: "Sending transaction...",
+        description: `Sending ${amount} SOL to @${username}`,
+      });
+      
+      const signature = await sendTransaction(transaction, connection);
+      
+      await api.transaction.record({
+        signature,
+        senderWalletId: publicKey.toString(),
+        recipientAddress: recipientWallet.publicKey,
+        amount: parseFloat(amount),
+        tokenSymbol: "SOL",
+        status: "pending",
+      });
+      
+      toast({
+        title: "Transaction sent!",
+        description: "Waiting for confirmation...",
+      });
+      
+      await connection.confirmTransaction(signature, "confirmed");
+      
+      await api.transaction.updateStatus(signature, {
+        status: "confirmed"
+      });
       
       toast({
         title: "Success!",
-        description: `Successfully sent ${amount} SOL to ${recipient}`,
+        description: `Successfully sent ${amount} SOL to @${username} on ${platform}`,
       });
       
-      // Reset form
-      setRecipient("");
+      setUsername("");
       setAmount("");
-      setMessage("");
     } catch (error) {
+      console.error("Failed to send tip:", error);
       toast({
         title: "Error",
-        description: "Failed to send tip. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send tip",
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const handleSetAmount = (value: string) => {
-    setAmount(value);
-  };
-
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Send a Tip</h1>
-        <p className="text-gray-500 dark:text-gray-400">Send SOL tips to users across social platforms</p>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="container max-w-2xl mx-auto px-4 py-8"
+    >
+      <div className="flex items-center gap-2 mb-8">
+        <Send className="w-6 h-6 text-primary" />
+        <h1 className="text-2xl font-bold">Send Tip</h1>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 max-w-2xl mx-auto">
-        <form onSubmit={handleSubmit}>
-          {/* Platform Selection */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Select Platform</label>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="relative">
-                <input 
-                  type="radio" 
-                  id="platform-twitter" 
-                  name="platform" 
-                  className="peer absolute opacity-0" 
-                  checked={platform === "twitter"} 
-                  onChange={() => setPlatform("twitter")} 
-                />
-                <label 
-                  htmlFor="platform-twitter" 
-                  className="flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer peer-checked:border-[#9945FF] transition-colors"
-                >
-                  <i className="fab fa-twitter text-2xl text-blue-400 mb-2"></i>
-                  <span className="text-sm">Twitter</span>
-                </label>
-              </div>
-              
-              <div className="relative">
-                <input 
-                  type="radio" 
-                  id="platform-discord" 
-                  name="platform" 
-                  className="peer absolute opacity-0" 
-                  checked={platform === "discord"} 
-                  onChange={() => setPlatform("discord")} 
-                />
-                <label 
-                  htmlFor="platform-discord" 
-                  className="flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer peer-checked:border-[#9945FF] transition-colors"
-                >
-                  <i className="fab fa-discord text-2xl text-indigo-500 mb-2"></i>
-                  <span className="text-sm">Discord</span>
-                </label>
-              </div>
-              
-              <div className="relative">
-                <input 
-                  type="radio" 
-                  id="platform-telegram" 
-                  name="platform" 
-                  className="peer absolute opacity-0" 
-                  checked={platform === "telegram"} 
-                  onChange={() => setPlatform("telegram")} 
-                />
-                <label 
-                  htmlFor="platform-telegram" 
-                  className="flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer peer-checked:border-[#9945FF] transition-colors"
-                >
-                  <i className="fab fa-telegram text-2xl text-blue-500 mb-2"></i>
-                  <span className="text-sm">Telegram</span>
-                </label>
+      <Card className="backdrop-blur-xl bg-background/30">
+        <CardHeader>
+          <CardTitle>Send SOL to anyone</CardTitle>
+          <CardDescription>
+            Send a tip using a platform username instead of a wallet address
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Platform</label>
+              <div className="flex gap-2">
+                {platformOptions.map((opt) => {
+                  const Icon = opt.icon;
+                  const isSelected = platform === opt.value;
+                  
+                  return (
+                    <Button
+                      key={opt.value}
+                      type="button"
+                      variant={isSelected ? "default" : "outline"}
+                      className={`flex-1 gap-2 ${isSelected ? "" : "hover:bg-muted/50"}`}
+                      onClick={() => setPlatform(opt.value)}
+                    >
+                      <Icon 
+                        className="w-4 h-4" 
+                        style={{ color: isSelected ? "currentColor" : opt.color }}
+                      />
+                      {opt.label}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
-          </div>
-          
-          {/* Recipient Information */}
-          <div className="mb-6">
-            <label htmlFor="recipient" className="block text-sm font-medium mb-2">Recipient Username</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">@</span>
-              <Input
-                id="recipient"
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
-                placeholder="username"
-                className="w-full py-3 pl-8 pr-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#9945FF] focus:border-transparent"
-              />
+
+            <div className="space-y-2">
+              <label htmlFor="username" className="text-sm font-medium">
+                Username
+              </label>
+              <div className="flex">
+                <div className="flex items-center bg-muted/50 border border-r-0 border-input rounded-l-md px-3">
+                  <span className="text-muted-foreground">@</span>
+                </div>
+                <Input
+                  id="username"
+                  placeholder="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="rounded-none rounded-r-md"
+                />
+              </div>
             </div>
-          </div>
-          
-          {/* Amount Selection */}
-          <div className="mb-6">
-            <label htmlFor="amount" className="block text-sm font-medium mb-2">Amount</label>
-            <div className="relative">
+
+            <div className="space-y-2">
+              <label htmlFor="amount" className="text-sm font-medium">
+                Amount (SOL)
+              </label>
               <Input
-                type="number"
                 id="amount"
-                min="0.000001"
-                step="0.000001"
+                type="number"
+                placeholder="0.0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.0"
-                className="w-full py-3 pl-3 pr-16 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#9945FF] focus:border-transparent"
+                min="0"
+                step="0.01"
               />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                <span className="font-medium text-gray-500 dark:text-gray-400">SOL</span>
-              </div>
-            </div>
-            <div className="flex justify-between mt-2">
-              <button type="button" onClick={() => handleSetAmount("0.1")} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded-full">0.1</button>
-              <button type="button" onClick={() => handleSetAmount("0.5")} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded-full">0.5</button>
-              <button type="button" onClick={() => handleSetAmount("1.0")} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded-full">1.0</button>
-              <button type="button" onClick={() => handleSetAmount("5.0")} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded-full">5.0</button>
-              <button type="button" onClick={() => handleSetAmount("10.0")} className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded-full">10.0</button>
-            </div>
-          </div>
-          
-          {/* Message (Optional) */}
-          <div className="mb-6">
-            <label htmlFor="message" className="block text-sm font-medium mb-2">Message (Optional)</label>
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Add a personal message..."
-              rows={3}
-              className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#9945FF] focus:border-transparent"
-            />
-          </div>
-          
-          {/* Transaction Fee */}
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Network Fee</span>
-              <span className="text-sm font-medium">~0.000005 SOL</span>
+              {amount && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-xs text-muted-foreground"
+                >
+                  ≈ {(parseFloat(amount) * LAMPORTS_PER_SOL).toLocaleString()} lamports
+                </motion.p>
+              )}
             </div>
           </div>
-          
-          {/* Send Button */}
-          <Button
-            type="submit"
-            disabled={!isConnected || isSubmitting}
-            className="w-full py-3 gradient-button text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isConnected ? 'Send Tip' : 'Connect Wallet to Send Tip'}
-          </Button>
-          
-          {/* Security Note */}
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">All transactions are secure and processed on the Solana blockchain.</p>
-          </div>
-        </form>
-      </div>
-
-      <ConnectWalletModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-    </div>
+        </CardContent>
+        <CardFooter>
+          {connected ? (
+            <Button
+              onClick={handleSendTip}
+              disabled={!amount || !username || loading}
+              className="w-full"
+              size="lg"
+            >
+              {loading ? "Sending..." : "Send Tip"}
+              {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
+            </Button>
+          ) : (
+            <WalletMultiButton className="w-full bg-primary hover:bg-primary/90 text-white rounded-md py-2" />
+          )}
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 }

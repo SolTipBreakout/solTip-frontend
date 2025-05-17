@@ -1,44 +1,22 @@
-import { Switch, Route, useLocation } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
-import Layout from "@/components/Layout";
-import Dashboard from "@/pages/Dashboard";
-import SendTip from "@/pages/SendTip";
-import WalletManagement from "@/pages/WalletManagement";
-import ConnectPlatforms from "@/pages/ConnectPlatforms";
-import TransactionHistory from "@/pages/TransactionHistory";
-import { WalletProvider } from "@/contexts/WalletContext";
-
-function Router() {
-  const [location] = useLocation();
-
-  return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/send" component={SendTip} />
-        <Route path="/wallet" component={WalletManagement} />
-        <Route path="/connect" component={ConnectPlatforms} />
-        <Route path="/transactions" component={TransactionHistory} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
-  );
-}
+import { WalletContextProvider } from '@/lib/WalletContextProvider';
+import Dashboard from '@/pages/Dashboard';
+import SendTip from '@/pages/SendTip';
+import ConnectPlatforms from '@/pages/ConnectPlatforms';
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WalletProvider>
-          <Toaster />
-          <Router />
-        </WalletProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <WalletContextProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/send" element={<SendTip />} />
+          <Route path="/connect" element={<ConnectPlatforms />} />
+        </Routes>
+        <Toaster />
+      </Router>
+    </WalletContextProvider>
   );
 }
 

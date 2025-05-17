@@ -1,266 +1,249 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Link2, Twitter, MessageCircle, Plus, Loader2, ArrowRight } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useSocialAccounts } from "@/hooks/useSocialAccounts";
-import { formatDate } from "@/lib/formatters";
-import { useWallet } from "@/hooks/useWallet";
-import ConnectWalletModal from "@/components/ConnectWalletModal";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { api, PlatformType, UserProfile } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
+const TelegramIcon = (props: React.ComponentProps<"svg">) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M22 2L11 13" />
+    <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+  </svg>
+);
+
+interface PlatformOption {
+  value: PlatformType;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+}
+
+const platformOptions: PlatformOption[] = [
+  { value: "twitter", label: "Twitter", icon: Twitter, color: "#1DA1F2" },
+  { value: "discord", label: "Discord", icon: MessageCircle, color: "#5865F2" },
+  { value: "telegram", label: "Telegram", icon: TelegramIcon, color: "#0088cc" },
+] as const;
+
 export default function ConnectPlatforms() {
-  const { isConnected } = useWallet();
-  const { socialAccounts, connectSocialAccount, disconnectSocialAccount } = useSocialAccounts();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { publicKey, connected } = useWallet();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newPlatform, setNewPlatform] = useState<PlatformType>("twitter");
+  const [newUsername, setNewUsername] = useState("");
   const { toast } = useToast();
 
-  const handleConnect = async (platform: string) => {
-    if (!isConnected) {
-      setIsModalOpen(true);
-      return;
-    }
-
+  const fetchUserProfile = async () => {
+    if (!publicKey) return;
+    
+    setIsLoading(true);
     try {
-      await connectSocialAccount(platform);
-      toast({
-        title: "Account Connected",
-        description: `Your ${platform} account has been connected successfully.`,
-      });
+      const profile = await api.user.getProfile(publicKey.toString());
+      setUserProfile(profile);
     } catch (error) {
+      console.error("Failed to fetch user profile:", error);
       toast({
-        title: "Connection Failed",
-        description: `Failed to connect your ${platform} account. Please try again.`,
+        title: "Error",
+        description: "Failed to load connected platforms",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (connected && publicKey) {
+      fetchUserProfile();
+    } else {
+      setUserProfile(null);
+    }
+  }, [connected, publicKey]);
+
+  const handleConnect = async (platform: PlatformType, username: string) => {
+    if (!publicKey) return;
+    
+    try {
+      await api.platform.connect(platform, username);
+      await fetchUserProfile();
+      toast({
+        title: "Success",
+        description: `Connected ${platform} account @${username}`,
+      });
+      setIsAdding(false);
+      setNewUsername("");
+    } catch (error) {
+      console.error("Failed to connect platform:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to connect platform",
         variant: "destructive",
       });
     }
   };
 
-  const handleDisconnect = async (platform: string) => {
+  const handleDisconnect = async (platform: PlatformType) => {
+    if (!publicKey) return;
+    
     try {
-      await disconnectSocialAccount(platform);
+      await api.platform.disconnect(platform);
+      await fetchUserProfile();
       toast({
-        title: "Account Disconnected",
-        description: `Your ${platform} account has been disconnected.`,
+        title: "Success",
+        description: `Disconnected ${platform} account`,
       });
     } catch (error) {
+      console.error("Failed to disconnect platform:", error);
       toast({
-        title: "Disconnection Failed",
-        description: `Failed to disconnect your ${platform} account. Please try again.`,
+        title: "Error",
+        description: "Failed to disconnect platform",
         variant: "destructive",
       });
     }
   };
-
-  if (!isConnected) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Connect Social Platforms</h1>
-          <p className="text-gray-500 dark:text-gray-400">Link your social media accounts to send and receive tips</p>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-8 text-center max-w-xl mx-auto">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
-            <i className="fas fa-link text-2xl text-gray-400"></i>
-          </div>
-          <h3 className="text-lg font-medium mb-2">No wallet connected</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">Connect your wallet first to link your social accounts.</p>
-          
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="px-6 py-3 gradient-button text-white rounded-full"
-          >
-            Connect Wallet
-          </button>
-        </div>
-        
-        <ConnectWalletModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Connect Social Platforms</h1>
-        <p className="text-gray-500 dark:text-gray-400">Link your social media accounts to send and receive tips</p>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="container max-w-2xl mx-auto px-4 py-8"
+    >
+      <div className="flex items-center gap-2 mb-8">
+        <Link2 className="w-6 h-6 text-primary" />
+        <h1 className="text-2xl font-bold">Connect Platforms</h1>
       </div>
-      
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Twitter Connection Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
-          <div className="p-6 md:flex items-start justify-between">
-            <div className="flex items-center space-x-4 mb-4 md:mb-0">
-              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                <i className="fab fa-twitter text-blue-400 text-2xl"></i>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold">Twitter</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Connect your Twitter account to send and receive tips</p>
-              </div>
+
+      <Card className="backdrop-blur-xl bg-background/30">
+        <CardHeader>
+          <CardTitle>Link your social accounts</CardTitle>
+          <CardDescription>
+            Connect your social media accounts to receive tips through them
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {!connected ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                Connect your wallet to manage platform connections
+              </p>
+              <WalletMultiButton className="bg-primary hover:bg-primary/90 text-white rounded-md py-2" />
             </div>
-            
-            {socialAccounts.find(a => a.platform === 'twitter')?.isConnected ? (
-              <div className="flex flex-col items-end">
-                <div className="text-xs px-2 py-1 mb-2 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Connected</div>
-                <div className="text-sm">{socialAccounts.find(a => a.platform === 'twitter')?.username}</div>
-              </div>
-            ) : (
-              <button
-                onClick={() => handleConnect('twitter')}
-                className="gradient-button px-6 py-2 text-white rounded-full mt-4 md:mt-0"
-              >
-                Connect
-              </button>
-            )}
-          </div>
-          
-          {socialAccounts.find(a => a.platform === 'twitter')?.isConnected && (
-            <div className="bg-gray-50 dark:bg-gray-750 p-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                <span className="text-sm">
-                  Connected on {formatDate(socialAccounts.find(a => a.platform === 'twitter')?.connectedAt || new Date())}
-                </span>
-              </div>
-              <button
-                onClick={() => handleDisconnect('twitter')}
-                className="text-sm text-red-500 hover:text-red-600"
-              >
-                Disconnect
-              </button>
+          ) : isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
-          )}
-        </div>
-        
-        {/* Discord Connection Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
-          <div className="p-6 md:flex items-start justify-between">
-            <div className="flex items-center space-x-4 mb-4 md:mb-0">
-              <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                <i className="fab fa-discord text-indigo-500 text-2xl"></i>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold">Discord</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Connect your Discord account to send and receive tips</p>
-              </div>
-            </div>
-            
-            {socialAccounts.find(a => a.platform === 'discord')?.isConnected ? (
-              <div className="flex flex-col items-end">
-                <div className="text-xs px-2 py-1 mb-2 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Connected</div>
-                <div className="text-sm">{socialAccounts.find(a => a.platform === 'discord')?.username}</div>
-              </div>
-            ) : (
-              <button
-                onClick={() => handleConnect('discord')}
-                className="gradient-button px-6 py-2 text-white rounded-full mt-4 md:mt-0"
-              >
-                Connect
-              </button>
-            )}
-          </div>
-          
-          {socialAccounts.find(a => a.platform === 'discord')?.isConnected && (
-            <div className="bg-gray-50 dark:bg-gray-750 p-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                <span className="text-sm">
-                  Connected on {formatDate(socialAccounts.find(a => a.platform === 'discord')?.connectedAt || new Date())}
-                </span>
-              </div>
-              <button
-                onClick={() => handleDisconnect('discord')}
-                className="text-sm text-red-500 hover:text-red-600"
-              >
-                Disconnect
-              </button>
-            </div>
-          )}
-        </div>
-        
-        {/* Telegram Connection Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
-          <div className="p-6 md:flex items-start justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                <i className="fab fa-telegram text-blue-500 text-2xl"></i>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold">Telegram</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Connect your Telegram account to send and receive tips</p>
-              </div>
-            </div>
-            
-            {socialAccounts.find(a => a.platform === 'telegram')?.isConnected ? (
-              <div className="flex flex-col items-end">
-                <div className="text-xs px-2 py-1 mb-2 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Connected</div>
-                <div className="text-sm">{socialAccounts.find(a => a.platform === 'telegram')?.username}</div>
-              </div>
-            ) : (
-              <button
-                onClick={() => handleConnect('telegram')}
-                className="gradient-button px-6 py-2 text-white rounded-full mt-4 md:mt-0"
-              >
-                Connect
-              </button>
-            )}
-          </div>
-          
-          {socialAccounts.find(a => a.platform === 'telegram')?.isConnected && (
-            <div className="bg-gray-50 dark:bg-gray-750 p-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                <span className="text-sm">
-                  Connected on {formatDate(socialAccounts.find(a => a.platform === 'telegram')?.connectedAt || new Date())}
-                </span>
-              </div>
-              <button
-                onClick={() => handleDisconnect('telegram')}
-                className="text-sm text-red-500 hover:text-red-600"
-              >
-                Disconnect
-              </button>
+          ) : (
+            <div className="space-y-4">
+              {userProfile?.platforms?.map((platform) => {
+                const opt = platformOptions.find((p) => p.value === platform.type);
+                if (!opt) return null;
+                
+                const Icon = opt.icon;
+                return (
+                  <div
+                    key={platform.type}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className="w-5 h-5" style={{ color: opt.color }} />
+                      <div>
+                        <p className="font-medium">{opt.label}</p>
+                        <p className="text-sm text-muted-foreground">
+                          @{platform.username}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDisconnect(platform.type)}
+                    >
+                      Disconnect
+                    </Button>
+                  </div>
+                );
+              })}
+
+              {isAdding ? (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="flex gap-2">
+                    {platformOptions.map((opt) => {
+                      const Icon = opt.icon;
+                      const isSelected = newPlatform === opt.value;
+                      const isConnected = userProfile?.platforms?.some(
+                        (p) => p.type === opt.value
+                      );
+                      
+                      if (isConnected) return null;
+                      
+                      return (
+                        <Button
+                          key={opt.value}
+                          type="button"
+                          variant={isSelected ? "default" : "outline"}
+                          className={`flex-1 gap-2 ${
+                            isSelected ? "" : "hover:bg-muted/50"
+                          }`}
+                          onClick={() => setNewPlatform(opt.value)}
+                        >
+                          <Icon
+                            className="w-4 h-4"
+                            style={{ color: isSelected ? "currentColor" : opt.color }}
+                          />
+                          {opt.label}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <div className="flex">
+                        <div className="flex items-center bg-muted/50 border border-r-0 border-input rounded-l-md px-3">
+                          <span className="text-muted-foreground">@</span>
+                        </div>
+                        <Input
+                          placeholder="username"
+                          value={newUsername}
+                          onChange={(e) => setNewUsername(e.target.value)}
+                          className="rounded-none rounded-r-md"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => handleConnect(newPlatform, newUsername)}
+                      disabled={!newUsername}
+                    >
+                      Connect
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </motion.div>
+              ) : (
+                <Button
+                  onClick={() => setIsAdding(true)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Platform
+                </Button>
+              )}
             </div>
           )}
-        </div>
-        
-        {/* How It Works Section */}
-        <div className="bg-gray-50 dark:bg-gray-750 rounded-xl p-6">
-          <h3 className="text-lg font-bold mb-4">How Platform Connections Work</h3>
-          
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="p-2 rounded-full bg-[#9945FF]/10 text-[#9945FF]">
-                <span className="font-bold">1</span>
-              </div>
-              <div>
-                <p className="font-medium">Connect your social accounts</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Link your Twitter, Discord, and Telegram accounts to SolTip</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-3">
-              <div className="p-2 rounded-full bg-[#9945FF]/10 text-[#9945FF]">
-                <span className="font-bold">2</span>
-              </div>
-              <div>
-                <p className="font-medium">Receive SOL tips through your social accounts</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Others can send you SOL by using your social handle</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-3">
-              <div className="p-2 rounded-full bg-[#9945FF]/10 text-[#9945FF]">
-                <span className="font-bold">3</span>
-              </div>
-              <div>
-                <p className="font-medium">Send tips to anyone on connected platforms</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Send SOL to people even if they haven't signed up yet</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
