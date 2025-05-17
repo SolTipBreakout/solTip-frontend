@@ -4,3 +4,8 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+pnpm-lock.yaml
+pnpm-workspace.yaml
+npm-lock.yaml
+task.md
+attached_assets
