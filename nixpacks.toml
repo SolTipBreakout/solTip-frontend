@@ -6,7 +6,7 @@ nixPkgs = ['nodejs_23', 'pnpm']
 cmds = ['pnpm install --frozen-lockfile']
 
 [phases.build]
-cmds = ['rm -rf dist , pnpm build']
+cmds = ['rm -rf dist' , 'pnpm build']
 cacheDirectories = ['node_modules/.cache']
 
 [start]
