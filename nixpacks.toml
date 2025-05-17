@@ -1,6 +1,6 @@
 # Use the default provider (Node.js) and ensure pnpm is available
 [phases.setup]
-nixPkgs = ['nodejs_20', 'pnpm']
+nixPkgs = ['nodejs_23', 'pnpm']
 
 [phases.install]
 cmds = ['pnpm install --frozen-lockfile']
