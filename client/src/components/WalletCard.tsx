@@ -47,19 +47,19 @@ export function WalletCard({ address, balance, isLoading }: WalletCardProps) {
 
   if (isLoading) {
     return (
-      <Card className="p-6 backdrop-blur-xl bg-background/30">
+      <Card className="p-6 border-purple-900/20 bg-black/40 backdrop-blur-xl shadow-lg shadow-purple-900/10">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-32 bg-purple-900/20" />
+            <Skeleton className="h-8 w-24 bg-purple-900/20" />
           </div>
           <div className="space-y-2">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-6 w-48 bg-purple-900/20" />
+            <Skeleton className="h-4 w-32 bg-purple-900/20" />
           </div>
           <div className="flex gap-2">
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24 bg-purple-900/20" />
+            <Skeleton className="h-10 w-24 bg-purple-900/20" />
           </div>
         </div>
       </Card>
@@ -72,37 +72,37 @@ export function WalletCard({ address, balance, isLoading }: WalletCardProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="p-6 backdrop-blur-xl bg-background/30">
+      <Card className="p-6 border-purple-900/20 bg-black/40 backdrop-blur-xl shadow-lg shadow-purple-900/10">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-primary" />
-              <h3 className="font-medium">Solana Wallet</h3>
+              <Wallet className="w-5 h-5 text-[#9945FF]" />
+              <h3 className="font-medium text-white">Solana Wallet</h3>
             </div>
-            <Button variant="outline" size="icon" onClick={handleOpenExplorer}>
+            <Button variant="outline" size="icon" onClick={handleOpenExplorer} className="border-purple-500/50 bg-purple-950/30 text-white hover:bg-purple-900/50 hover:text-white">
               <ExternalLink className="w-4 h-4" />
             </Button>
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium truncate">{address}</p>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyAddress}>
+              <p className="text-sm font-medium truncate text-white/90">{address}</p>
+              <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-[#14F195] hover:bg-transparent" onClick={handleCopyAddress}>
                 <Copy className="w-3 h-3" />
               </Button>
             </div>
-            <p className="text-2xl font-bold">{balance.toFixed(4)} SOL</p>
-            <p className="text-xs text-muted-foreground">{(balance * LAMPORTS_PER_SOL).toLocaleString()} lamports</p>
+            <p className="text-2xl font-bold text-white bg-gradient-to-r from-[#9945FF] to-[#14F195] bg-clip-text text-transparent">{balance.toFixed(4)} SOL</p>
+            <p className="text-xs text-white/60">{(balance * LAMPORTS_PER_SOL).toLocaleString()} lamports</p>
           </div>
 
           <div className="flex gap-2">
-            <Button asChild className="flex-1">
+            <Button asChild className="flex-1 bg-purple-600 hover:bg-purple-700 text-white">
               <a href="/send">
                 <Send className="w-4 h-4 mr-2" />
                 Send
               </a>
             </Button>
-            <Button variant="outline" className="flex-1" onClick={() => setShowQR(true)}>
+            <Button variant="outline" className="flex-1 border-purple-500/50 bg-purple-950/30 text-white hover:bg-purple-900/50 hover:text-white" onClick={() => setShowQR(true)}>
               <QrCode className="w-4 h-4 mr-2" />
               Receive
             </Button>
@@ -111,10 +111,10 @@ export function WalletCard({ address, balance, isLoading }: WalletCardProps) {
       </Card>
 
       <Dialog open={showQR} onOpenChange={setShowQR}>
-        <DialogContent>
+        <DialogContent className="border-purple-900/30 bg-black/80 backdrop-blur-2xl">
           <DialogHeader>
-            <DialogTitle>Receive SOL</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Receive SOL</DialogTitle>
+            <DialogDescription className="text-white/60">
               Scan this QR code to send SOL to this wallet
             </DialogDescription>
           </DialogHeader>
@@ -126,8 +126,8 @@ export function WalletCard({ address, balance, isLoading }: WalletCardProps) {
                 className="w-48 h-48"
               />
             </div>
-            <p className="text-sm text-center break-all mb-2">{address}</p>
-            <Button variant="outline" size="sm" onClick={handleCopyAddress}>
+            <p className="text-sm text-center break-all mb-2 text-white/80">{address}</p>
+            <Button variant="outline" size="sm" onClick={handleCopyAddress} className="border-purple-500/50 bg-purple-950/30 text-white hover:bg-purple-900/50 hover:text-white">
               <Copy className="w-3 h-3 mr-2" />
               Copy Address
             </Button>

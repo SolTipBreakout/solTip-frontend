@@ -130,17 +130,17 @@ export default function SendTip() {
       transition={{ duration: 0.4 }}
       className="container max-w-2xl mx-auto px-4 py-8"
     >
-      <Card className="backdrop-blur-xl bg-background/30">
+      <Card className="border-purple-900/20 bg-black/40 backdrop-blur-xl shadow-lg shadow-purple-900/10">
         <CardHeader>
-          <CardTitle>Send SOL to anyone</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-white">Send SOL to anyone</CardTitle>
+          <CardDescription className="text-white/60">
             Send a tip using a platform username instead of a wallet address
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Platform</label>
+              <label className="text-sm font-medium text-white/80">Platform</label>
               <div className="flex gap-2">
                 {platformOptions.map((opt) => {
                   const Icon = opt.icon;
@@ -151,7 +151,11 @@ export default function SendTip() {
                       key={opt.value}
                       type="button"
                       variant={isSelected ? "default" : "outline"}
-                      className={`flex-1 gap-2 ${isSelected ? "" : "hover:bg-muted/50"}`}
+                      className={`flex-1 gap-2 ${
+                        isSelected 
+                          ? "bg-purple-600 hover:bg-purple-700 text-white"
+                          : "border-purple-500/50 bg-purple-950/30 text-white hover:bg-purple-900/50 hover:text-white"
+                      }`}
                       onClick={() => setPlatform(opt.value)}
                     >
                       <Icon 
@@ -166,25 +170,25 @@ export default function SendTip() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium">
+              <label htmlFor="username" className="text-sm font-medium text-white/80">
                 Username
               </label>
               <div className="flex">
-                <div className="flex items-center bg-muted/50 border border-r-0 border-input rounded-l-md px-3">
-                  <span className="text-muted-foreground">@</span>
+                <div className="flex items-center bg-black/30 border border-r-0 border-purple-900/30 rounded-l-md px-3">
+                  <span className="text-white/60">@</span>
                 </div>
                 <Input
                   id="username"
                   placeholder="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="rounded-none rounded-r-md"
+                  className="rounded-none rounded-r-md bg-black/30 border-purple-900/30 text-white placeholder:text-white/40"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="amount" className="text-sm font-medium">
+              <label htmlFor="amount" className="text-sm font-medium text-white/80">
                 Amount (SOL)
               </label>
               <Input
@@ -195,12 +199,13 @@ export default function SendTip() {
                 onChange={(e) => setAmount(e.target.value)}
                 min="0"
                 step="0.01"
+                className="bg-black/30 border-purple-900/30 text-white placeholder:text-white/40"
               />
               {amount && (
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-xs text-muted-foreground"
+                  className="text-xs text-white/60"
                 >
                   ≈ {(parseFloat(amount) * LAMPORTS_PER_SOL).toLocaleString()} lamports
                 </motion.p>
@@ -213,7 +218,7 @@ export default function SendTip() {
             <Button
               onClick={handleSendTip}
               disabled={!amount || !username || loading}
-              className="w-full"
+              className={`w-full bg-purple-600 hover:bg-purple-700 text-white ${loading ? 'opacity-70' : ''}`}
               size="lg"
             >
               {loading ? "Sending..." : "Send Tip"}
@@ -221,7 +226,7 @@ export default function SendTip() {
             </Button>
           ) : (
             <div className="w-full text-center">
-              <p className="text-muted-foreground mb-4">Connect your wallet using the button in the header to send tips</p>
+              <p className="text-white/60 mb-4">Connect your wallet using the button in the header to send tips</p>
             </div>
           )}
         </CardFooter>
