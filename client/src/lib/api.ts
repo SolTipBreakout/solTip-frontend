@@ -1,6 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 
-const API_BASE_URL = "/api";
+const API_BASE_URL = "/api";//TODO update with mcpurl
 
 declare global {
   interface Window {
