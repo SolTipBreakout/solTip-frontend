@@ -1,5 +1,5 @@
-import { ReactNode, useMemo } from 'react';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import { ReactNode, useMemo, useEffect } from 'react';
+import { ConnectionProvider, WalletProvider, useWallet } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { 
   PhantomWalletAdapter, 
@@ -20,6 +20,23 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 
 interface WalletContextProviderProps {
   children: ReactNode;
+}
+
+// This component syncs the wallet public key with the window object
+function WalletPublicKeySyncer() {
+  const { publicKey, connected } = useWallet();
+  
+  useEffect(() => {
+    if (connected && publicKey) {
+      window.walletPublicKey = publicKey.toString();
+      console.log("Wallet public key set in window object:", window.walletPublicKey);
+    } else {
+      window.walletPublicKey = undefined;
+      console.log("Wallet public key cleared from window object");
+    }
+  }, [publicKey, connected]);
+  
+  return null;
 }
 
 export function WalletContextProvider({ children }: WalletContextProviderProps) {
@@ -50,6 +67,7 @@ export function WalletContextProvider({ children }: WalletContextProviderProps) 
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
+          <WalletPublicKeySyncer />
           {children}
         </WalletModalProvider>
       </WalletProvider>

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Copy, ExternalLink, Send, Wallet, QrCode } from "lucide-react";
+import { Copy, ExternalLink, Send, Wallet, QrCode, RefreshCw } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
@@ -18,10 +18,12 @@ interface WalletCardProps {
   address: string;
   balance: number;
   isLoading?: boolean;
+  onRefresh?: () => void;
 }
 
-export function WalletCard({ address, balance, isLoading }: WalletCardProps) {
+export function WalletCard({ address, balance, isLoading, onRefresh }: WalletCardProps) {
   const [showQR, setShowQR] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
   const handleCopyAddress = async () => {
@@ -43,6 +45,28 @@ export function WalletCard({ address, balance, isLoading }: WalletCardProps) {
 
   const handleOpenExplorer = () => {
     window.open(`https://explorer.solana.com/address/${address}?cluster=devnet`, "_blank");
+  };
+
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+    
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+      toast({
+        title: "Refreshed",
+        description: "Wallet balance updated",
+      });
+    } catch (error) {
+      console.error("Failed to refresh balance:", error);
+      toast({
+        title: "Refresh failed",
+        description: "Could not update wallet balance",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   if (isLoading) {
@@ -79,9 +103,27 @@ export function WalletCard({ address, balance, isLoading }: WalletCardProps) {
               <Wallet className="w-5 h-5 text-[#9945FF]" />
               <h3 className="font-medium text-white">Solana Wallet</h3>
             </div>
-            <Button variant="outline" size="icon" onClick={handleOpenExplorer} className="border-purple-500/50 bg-purple-950/30 text-white hover:bg-purple-900/50 hover:text-white">
-              <ExternalLink className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-2">
+              {onRefresh && (
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={handleRefresh} 
+                  disabled={isRefreshing}
+                  className="border-purple-500/50 bg-purple-950/30 text-white hover:bg-purple-900/50 hover:text-white"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleOpenExplorer} 
+                className="border-purple-500/50 bg-purple-950/30 text-white hover:bg-purple-900/50 hover:text-white"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-1">

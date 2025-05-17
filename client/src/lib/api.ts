@@ -1,6 +1,11 @@
 import { PublicKey } from "@solana/web3.js";
 
-const API_BASE_URL = "/api";//TODO update with mcpurl
+// Define platform types
+export type PlatformType = "twitter" | "telegram" | "discord";
+
+// Set up the API base URL using environment variables
+const API_BASE_URL = import.meta.env.VITE_NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_KEY = "dev-key-1";
 
 declare global {
   interface Window {
@@ -27,6 +32,8 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
   if (window.walletPublicKey) {
     headers.set("Authorization", `Bearer ${window.walletPublicKey}`);
   }
+  // ✅ Set the API key header
+  headers.set("x-api-key", API_KEY);
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
@@ -36,8 +43,12 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
   return handleResponse<T>(response);
 };
 
+// API error response type
+interface ApiErrorResponse {
+  message?: string;
+}
+
 // Type definitions
-export type PlatformType = "twitter" | "discord" | "telegram";
 export type TransactionStatus = "pending" | "confirmed" | "failed";
 export type TransactionType = "tip" | "withdrawal" | "deposit";
 
@@ -70,110 +81,153 @@ export interface Transaction {
   updatedAt: string;
 }
 
+// Connection to a social platform
+export interface PlatformConnection {
+  platform: PlatformType;
+  platformId: string;
+  connected: boolean;
+}
+
+// User profile interface
 export interface UserProfile {
-  wallet: Wallet;
-  platforms: Platform[];
-  transactions: Transaction[];
+  id: string;
+  walletAddress: string;
+  balance: number;
+  connections: PlatformConnection[];
 }
 
-export interface ConnectPlatformData {
-  platform: PlatformType;
-  username: string;
+export interface UserProfileResponse {
+  success: boolean;
+  data: {
+
+      id: string;
+      publicKey: string;
+      isCustodial: boolean;
+      label?: string;
+      createdAt: string;
+      updatedAt: string;
+    socialAccounts: Array<{
+      platform: PlatformType;
+      platformId: string;
+      walletId: string;
+      createdAt: string;
+    }>;
+    transactions: Transaction[]; // Last 5 transactions
+  }
 }
 
-export interface CreateWalletData {
-  publicKey: string;
+export interface SendSolParams {
+  senderPlatform: PlatformType;
+  senderPlatformId: string;
+  recipientPlatform: PlatformType;
+  recipientPlatformId: string;
+  amount: number;
 }
 
-export interface GetWalletBySocialData {
-  platform: PlatformType;
-  username: string;
+export interface SendSolResponse {
+  content: Array<{
+    type: string;
+    text: string;
+  }>;
 }
 
-// API client functions
+// API routes and methods
 export const api = {
+  // User-related endpoints
   user: {
+    // Get user profile info
     getProfile: (walletAddress: string, limit?: number, offset?: number) =>
       apiRequest<UserProfile>(`/user/${walletAddress}?limit=${limit || 10}&offset=${offset || 0}`),
     
-    getWalletBySocial: (platform: PlatformType, username: string) =>
-      apiRequest<Wallet>(`/user/wallet/${platform}/${username}`),
+    // Get user profile by wallet address
+    getProfileByWalletAddress: (walletAddress: string) =>
+      apiRequest<UserProfileResponse>(`/user/wallet/${walletAddress}`),
+
+    // Get user by platform ID
+    getByPlatformId: (platform: PlatformType, platformId: string) =>
+      apiRequest<UserProfile>(`/user/platform/${platform}/${platformId}`),
     
-    getOrCreateWallet: (data: CreateWalletData) =>
-      apiRequest<Wallet>("/user/wallet", {
+    // Get wallet by social account (platform and username)
+    getWalletBySocial: (platform: PlatformType, platformId: string) =>
+      apiRequest<UserProfileResponse>(`/user/wallet/social?platform=${platform}&platformId=${platformId}`),
+
+    // Create a new account for a wallet
+    getOrCreateWallet: (walletAddress: string) =>
+      apiRequest<UserProfile>("/user/wallet", {
         method: "POST",
-        body: JSON.stringify({ publicKey: data.publicKey }),
+        body: JSON.stringify({ walletAddress }),
       }),
+
+    // Get a user's balance
+    getBalance: (walletAddress: string) =>
+      apiRequest<{ balance: number }>(`/user/${walletAddress}/balance`),
+
+    // Get a user's social accounts
+    getSocialAccounts: (walletAddress: string) =>
+      apiRequest<{ accounts: PlatformConnection[] }>(`/user/${walletAddress}/social`),
     
-    linkWallet: (data: { platform: PlatformType; platformId: string; walletPublicKey: string }) => 
-      apiRequest<Wallet>("/user/wallet/link", {
-        method: "POST",
-        body: JSON.stringify(data)
-      }),
-    
-    unlinkWallet: (platform: PlatformType) =>
-      apiRequest<{ success: boolean }>(`/user/wallet/unlink?platform=${platform}`, {
-        method: "DELETE"
-      }),
-    
-    getSocialAccounts: (walletAddress: string) => 
-      apiRequest<Platform[]>(`/user/social-accounts/${walletAddress}`)
+    // Get a user's platform connections
+    connections: (walletAddress: string) =>
+      apiRequest<{ connections: PlatformConnection[] }>(`/user/${walletAddress}/connections`)
   },
-  
-  platform: {
-    connect: (platform: PlatformType, username: string) =>
-      apiRequest<Platform>("/platform/connect", {
-        method: "POST",
-        body: JSON.stringify({ platform, username } satisfies ConnectPlatformData),
-      }),
-    
-    disconnect: (platform: PlatformType) =>
-      apiRequest<Platform>(`/platform/disconnect/${platform}`, {
-        method: "POST",
-      }),
-  },
-  
-  transaction: {
-    record: (data: {
-      signature: string;
-      senderWalletId: string;
-      recipientAddress: string;
+
+  // SOL transaction endpoints
+  sol: {
+    // Send SOL to a user
+    sendToUser: (params: {
+      senderPlatform: PlatformType;
+      senderPlatformId: string;
+      recipientPlatform: PlatformType;
+      recipientPlatformId: string;
       amount: number;
-      tokenSymbol: string;
-      status: TransactionStatus;
     }) =>
-      apiRequest<Transaction>("/transaction", {
+      apiRequest<SendSolResponse>("/sol/send", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify(params),
       }),
-    
-    updateStatus: (signature: string, data: { status: TransactionStatus }) =>
-      apiRequest<Transaction>(`/transaction/${signature}/status`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
+
+    // Get transaction history
+    getTransactions: (walletAddress: string, limit = 10, offset = 0) =>
+      apiRequest<{ transactions: Transaction[] }>(`/sol/transactions/${walletAddress}?limit=${limit}&offset=${offset}`),
+  },
+
+  // Platform connection endpoints
+  platform: {
+    // Connect a platform to user account
+    connect: (platform: PlatformType, platformId: string) =>
+      apiRequest<{ success: boolean }>("/platform/connect", {
+        method: "POST",
+        body: JSON.stringify({ platform, platformId }),
       }),
-  }
+
+    // Disconnect a platform
+    disconnect: (platform: PlatformType) =>
+      apiRequest<{ success: boolean }>("/platform/disconnect", {
+        method: "POST",
+        body: JSON.stringify({ platform }),
+      }),
+  },
 };
 
-// Helper function to send tip to a username on a platform
-export async function sendTipToUser(
-  platform: PlatformType,
-  username: string,
-  amount: number,
-  senderPublicKey: string
-): Promise<{ recipientPublicKey: string }> {
-  // Get recipient's wallet by social username
-  const recipientWallet = await api.user.getWalletBySocial(platform, username);
+// // Helper function to send tip to a username on a platform
+// export async function sendTipToUser(
+//   platform: PlatformType,
+//   username: string,
+//   amount: number,
+//   senderPublicKey: string
+// ): Promise<{ recipientPublicKey: string }> {
+//   // Get recipient's wallet by social username
+//   const recipientWallet = await api.user.getByPlatformId(platform, username);
   
-  if (!recipientWallet) {
-    throw new Error(`No wallet found for @${username} on ${platform}`);
-  }
+//   if (!recipientWallet) {
+//     throw new Error(`No wallet found for @${username} on ${platform}`);
+//   }
   
-  if (!recipientWallet.publicKey) {
-    throw new Error(`Recipient wallet doesn't have a valid public key`);
-  }
+//   if (!recipientWallet.publicKey) {
+//     throw new Error(`Recipient wallet doesn't have a valid public key`);
+//   }
   
-  return {
-    recipientPublicKey: recipientWallet.publicKey,
-  };
-} 
+//   return {
+//     recipientPublicKey: recipientWallet.publicKey,
+//   };
+// } 
