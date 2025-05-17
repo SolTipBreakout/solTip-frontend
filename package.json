@@ -10,9 +10,6 @@
     "check": "tsc",
     "db:push": "drizzle-kit push"
   },
-  "engines": {
-    "node": "20.16.11"
-  },
   "dependencies": {
     "@clerk/clerk-react": "^5.31.3",
     "@hookform/resolvers": "^3.10.0",
