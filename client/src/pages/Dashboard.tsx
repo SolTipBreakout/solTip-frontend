@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wallet as WalletIcon, ArrowDownRight, ArrowUpRight, Twitter, MessageCircle } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Twitter, MessageCircle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -72,11 +71,6 @@ export default function Dashboard() {
       transition={{ duration: 0.4 }}
       className="container max-w-4xl mx-auto px-4 py-8"
     >
-      <div className="flex items-center gap-2 mb-8">
-        <WalletIcon className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           {connected && publicKey && userProfile ? (
@@ -94,7 +88,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center pb-6">
-                <WalletMultiButton className="bg-primary hover:bg-primary/90 text-white rounded-md py-2" />
+                <p className="text-muted-foreground">Click the "Select Wallet" button in the header to connect</p>
               </CardContent>
             </Card>
           )}
@@ -147,7 +141,6 @@ export default function Dashboard() {
                     <p className="text-muted-foreground mb-4">
                       Connect your wallet to see your transactions
                     </p>
-                    <WalletMultiButton className="bg-primary hover:bg-primary/90 text-white rounded-md py-2" />
                   </div>
                 ) : isLoading ? (
                   <div className="text-center py-6">
@@ -219,7 +212,6 @@ export default function Dashboard() {
                     <p className="text-muted-foreground mb-4">
                       Connect your wallet to see your linked platforms
                     </p>
-                    <WalletMultiButton className="bg-primary hover:bg-primary/90 text-white rounded-md py-2" />
                   </div>
                 ) : isLoading ? (
                   <div className="text-center py-6">

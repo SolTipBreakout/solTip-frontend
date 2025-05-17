@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Send, ArrowRight, Twitter, MessageCircle } from "lucide-react";
+import { ArrowRight, Twitter, MessageCircle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -130,11 +130,6 @@ export default function SendTip() {
       transition={{ duration: 0.4 }}
       className="container max-w-2xl mx-auto px-4 py-8"
     >
-      <div className="flex items-center gap-2 mb-8">
-        <Send className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-bold">Send Tip</h1>
-      </div>
-
       <Card className="backdrop-blur-xl bg-background/30">
         <CardHeader>
           <CardTitle>Send SOL to anyone</CardTitle>
@@ -225,7 +220,9 @@ export default function SendTip() {
               {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
             </Button>
           ) : (
-            <WalletMultiButton className="w-full bg-primary hover:bg-primary/90 text-white rounded-md py-2" />
+            <div className="w-full text-center">
+              <p className="text-muted-foreground mb-4">Connect your wallet using the button in the header to send tips</p>
+            </div>
           )}
         </CardFooter>
       </Card>

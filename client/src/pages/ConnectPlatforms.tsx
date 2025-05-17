@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link2, Twitter, MessageCircle, Plus, Loader2, ArrowRight } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Twitter, MessageCircle, Plus, Loader2, ArrowRight } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { api, PlatformType, UserProfile } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -114,11 +113,6 @@ export default function ConnectPlatforms() {
       transition={{ duration: 0.4 }}
       className="container max-w-2xl mx-auto px-4 py-8"
     >
-      <div className="flex items-center gap-2 mb-8">
-        <Link2 className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-bold">Connect Platforms</h1>
-      </div>
-
       <Card className="backdrop-blur-xl bg-background/30">
         <CardHeader>
           <CardTitle>Link your social accounts</CardTitle>
@@ -130,9 +124,8 @@ export default function ConnectPlatforms() {
           {!connected ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">
-                Connect your wallet to manage platform connections
+                Connect your wallet using the button in the header to manage platform connections
               </p>
-              <WalletMultiButton className="bg-primary hover:bg-primary/90 text-white rounded-md py-2" />
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center py-8">
