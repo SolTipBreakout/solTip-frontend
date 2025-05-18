@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Twitter, MessageCircle, UserPlus, ExternalLink } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
@@ -10,6 +10,7 @@ import { WalletCard } from "@/components/WalletCard";
 import { api, PlatformType, Transaction, UserProfileResponse } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 const TelegramIcon = (props: React.ComponentProps<"svg">) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -54,10 +55,26 @@ const platformOptions: PlatformOption[] = [
 
 export default function Dashboard() {
   const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAccountInfo, setShowAccountInfo] = useState(false);
   const { toast } = useToast();
+  const [walletBalance, setWalletBalance] = useState(0);
+
+  const fetchWalletBalance = async () => {
+    if (!publicKey || !connection) return 0;
+    
+    try {
+      const balance = await connection.getBalance(publicKey);
+      const solBalance = balance / LAMPORTS_PER_SOL;
+      setWalletBalance(solBalance);
+      return solBalance;
+    } catch (error) {
+      console.error("Error fetching wallet balance:", error);
+      return 0;
+    }
+  };
 
   const fetchUserProfile = async () => {
     if (!publicKey) return;
@@ -66,35 +83,32 @@ export default function Dashboard() {
     setShowAccountInfo(false);
     
     try {
-      // Use the new API endpoint to get the user profile
+      const solanaBalance = await fetchWalletBalance();
+      
       const response = await api.user.getProfileByWalletAddress(publicKey.toString());
       
       if (response.success && response.data) {
-        // Transform the response data to match our component's expected format
-        const mainWallet = response.data.public_key || null;
-        
+        const mainWallet = response.data?.wallets[0] || null;
         if (!mainWallet) {
           throw new Error("No wallets found for this user");
         }
         
-        // Map social accounts to the format our UI expects
         const platforms: PlatformData[] = response.data.socialAccounts.map((account: { platform: any; platform_id: any; created_at: any; }) => {
           return {
             type: account.platform,
             platformId: account.platform_id,
-            username: account.platform_id, // Using platform_id as username
+            username: account.platform_id,
             connected: true,
             createdAt: account.created_at
           };
         });
         
-        // Set the user data
         setUserData({
           wallet: {
             id: mainWallet.id,
             publicKey: mainWallet.public_key,
             isCustodial: mainWallet.is_custodial,
-            balance: 0, // We'll need to get this from elsewhere
+            balance: solanaBalance,
             createdAt: mainWallet.created_at,
             updatedAt: mainWallet.updated_at
           },
@@ -107,7 +121,6 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
       
-      // Check if the error indicates the user profile doesn't exist
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       
       if (
@@ -131,12 +144,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (connected && publicKey) {
       fetchUserProfile();
+      fetchWalletBalance();
+      const intervalId = setInterval(fetchWalletBalance, 30000);
+      return () => clearInterval(intervalId);
     } else {
       setUserData(null);
       setIsLoading(false);
       setShowAccountInfo(false);
     }
-  }, [connected, publicKey]);
+  }, [connected, publicKey, connection]);
   
   const handleRefreshWallet = async () => {
     await fetchUserProfile();
@@ -343,13 +359,13 @@ export default function Dashboard() {
                         className="flex items-center justify-between p-4 rounded-lg border border-purple-900/30 bg-black/30"
                       >
                         <div className="flex items-center gap-3">
-                          {tx.type === "tip" ? (
-                            tx.senderWalletId === publicKey?.toString() ? (
+                          {tx.status === "pending" ? (
+                            tx.sender_wallet_id === publicKey?.toString() ? (
                               <ArrowUpRight className="w-5 h-5 text-[#FF4D4D]" />
                             ) : (
                               <ArrowDownRight className="w-5 h-5 text-[#14F195]" />
                             )
-                          ) : tx.type === "deposit" ? (
+                          ) : tx.status === "confirmed" ? (
                             <ArrowDownRight className="w-5 h-5 text-[#14F195]" />
                           ) : (
                             <ArrowUpRight className="w-5 h-5 text-[#FF4D4D]" />
@@ -357,10 +373,10 @@ export default function Dashboard() {
                           
                           <div>
                             <p className="font-medium text-white">
-                              {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
+                              {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                             </p>
                             <p className="text-sm text-white/60">
-                              {formatDistanceToNow(new Date(tx.createdAt), { addSuffix: true })}
+                              {formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}
                             </p>
                           </div>
                         </div>
@@ -369,7 +385,7 @@ export default function Dashboard() {
                           <p className={`font-medium ${
                             tx.senderWalletId === publicKey?.toString() ? "text-[#FF4D4D]" : "text-[#14F195]"
                           }`}>
-                            {tx.senderWalletId === publicKey?.toString() ? "-" : "+"}{tx.amount} {tx.tokenSymbol}
+                            {tx.sender_wallet_id === publicKey?.toString() ? "-" : "+"}{tx.amount} {tx.token_symbol}
                           </p>
                           <p className="text-xs text-white/60">
                             {tx.status}

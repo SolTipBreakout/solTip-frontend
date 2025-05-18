@@ -71,15 +71,16 @@ export interface Wallet {
 export interface Transaction {
   id: string;
   signature: string;
-  type: TransactionType;
   status: TransactionStatus;
   amount: number;
-  tokenSymbol: string;
-  senderWalletId: string;
-  recipientAddress: string;
-  createdAt: string;
-  updatedAt: string;
+  token_symbol: string;
+  sender_wallet_id: string;
+  recipient_address: string;
+  created_at: string;
+  updated_at: string;
 }
+
+
 
 // Connection to a social platform
 export interface PlatformConnection {
@@ -99,13 +100,14 @@ export interface UserProfile {
 export interface UserProfileResponse {
   success: boolean;
   data: {
-
+    wallets: Array<{
       id: string;
       publicKey: string;
       isCustodial: boolean;
       label?: string;
       createdAt: string;
       updatedAt: string;
+    }>;
     socialAccounts: Array<{
       platform: PlatformType;
       platformId: string;
@@ -137,7 +139,7 @@ export const api = {
   user: {
     // Get user profile info
     getProfile: (walletAddress: string, limit?: number, offset?: number) =>
-      apiRequest<UserProfile>(`/user/${walletAddress}?limit=${limit || 10}&offset=${offset || 0}`),
+      apiRequest<UserProfile>(`/user/profile/${walletAddress}?limit=${limit || 10}&offset=${offset || 0}`),
     
     // Get user profile by wallet address
     getProfileByWalletAddress: (walletAddress: string) =>
